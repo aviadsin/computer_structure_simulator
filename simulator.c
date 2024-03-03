@@ -31,7 +31,7 @@ FILE* ledFile;
 
 
 //ATTENTION: i do not know if the PC should be incremented in simCycle after a PC related Cmd
-//ATTENTION: i did not create a halCmd() functon because i think this should just return the simCycle() function. 
+//ATTENTION: i did not create a halCmd() functon because i think this should just return the simCycle() function.
 
 
 int init()
@@ -41,6 +41,7 @@ int init()
 
 int simClockCycle()
 {
+    //TODO: decide in which order we need to call the functions
     return 0;
 }
 
@@ -115,7 +116,7 @@ int xorCmd(int rd, int rs,int rt, int rm){
     return 1;
 }
 
-int sllCmd(int rd, int rs,int rt){
+int sllCmd(int rd, int rs, int rt){
     if(rd<0||rd>=16){
         return 0;
     }
@@ -237,7 +238,7 @@ int retiCmd(){ //////// i don't know if we should c=increment the value of PC by
     return 1;
 }
 
-int inCmd(int rd, int rs,int rt){ 
+int inCmd(int rd, int rs,int rt) { 
     if(rd<0||rd>=16){
         return 0;
     }
