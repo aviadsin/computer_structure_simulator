@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-// comment to see if Ben knows how to use git
 
 
 int cycle;
@@ -20,8 +19,19 @@ uint8_t monitor[256][256];
 FILE* traceFile;
 FILE* hwRegTraceFile;
 FILE* ledFile;
+const char* hwRegistersNames[] = {
+    // Usage:
+    // hwRegisterNames[register number] -> "regname"
 
-// FILE* sevenSegFile;
+    "irq0enable", "irq1enable", "irq2enable",
+    "irq0status", "irq1status", "irq2status",
+    "irqhandler", "irqreturn",
+    "clks", "leds", "display7seg", 
+    "timerenable", "timercurrent", "timermax",
+    "diskcmd", "disksector", "diskbuffer", "diskstatus",
+    "reserved", "monitoraddr", "monitordata", "monitorcmd"
+};
+
 
 
 // TODO: write a function for each opcode - Aviad
@@ -252,4 +262,49 @@ int inCmd(int rd, int rs,int rt) {
 int outCmd(int rs,int rt, int rm){ 
     deviceRegisters[registers[rs]+registers[rt]] = registers[rm];
     return 1;
+}
+
+int update_traceFile() {
+    
+    // make sure that traceFile is open
+    if(traceFile == NULL)
+    {
+    printf("traceFile not opened properly!\n");
+    return 1;
+    }
+    
+    fprintf(traceFile, "%08X %08X", PC, instructions[PC]); // add "PC INST" to file (in hex)
+        for (int i = 0; i < 16; i++) {
+            fprintf(traceFile, " %08X", registers[i]); // add " R[i]" for 0<=i<=15
+        }
+        fprintf(traceFile, "\n"); 
+        fflush(traceFile); // save immediately
+
+    return 0;
+}
+
+int update_hwRegTraceFile(const char* action, int regNum, uint32_t data){
+    
+    // Usage:
+    // update_hwRegTraceFile("READ", 11, deviceRegisters[11]);
+    // update_hwRegTraceFile("WRITE", 14, data); (where data is what you wrote to device register 14 in that clock cycle)
+
+    // The file format is:
+    // CYCLE READ/WRITE NAME DATA
+
+    if(hwRegTraceFile == NULL)
+    {
+        printf("hwRegTraceFile not opened properly! \n");
+        return 1;
+    }
+
+    if (hwRegTraceFile != NULL && regNum < sizeof(hwRegistersNames)/sizeof(hwRegistersNames[0])) {
+        // Print the cycle number, read/write action, register name, and data in hex format
+        fprintf(hwRegTraceFile, "%d %s %s %08X\n", cycle, action, hwRegistersNames[regNum], data);
+        fflush(hwRegTraceFile); 
+    }
+
+    return 0;
+
+
 }
