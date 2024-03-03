@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/aviad/OneDrive/שולחן העבודה/Aviad Files/HomeWork/פרויקט מבנה המחשב",
-      "program": "c:/Users/aviad/OneDrive/שולחן העבודה/Aviad Files/HomeWork/פרויקט מבנה המחשב/build/Debug/outDebug",
+      "cwd": "c:/Users/aviad/OneDrive/שולחן העבודה/Aviad Files/HomeWork/פרויקט מבנה המחשב/.vscode/computer_structure_simulator",
+      "program": "c:/Users/aviad/OneDrive/שולחן העבודה/Aviad Files/HomeWork/פרויקט מבנה המחשב/.vscode/computer_structure_simulator/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

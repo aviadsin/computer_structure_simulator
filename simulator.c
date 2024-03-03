@@ -32,31 +32,45 @@ const char* hwRegistersNames[] = {
     "reserved", "monitoraddr", "monitordata", "monitorcmd"
 };
 
+//TODO: devices - timer , LED lights, Monitor, Disk Drive
+//TODO: init 
+//TODO: functions reading from input files - imemin.txt dmemin.txt diskin.txt irq2in.txt {$Aviad}
+
+//TODO: symCycle
+//TODO: create parse instruction function.
+
+//TODO: byebye
+//TODO: functions writing to output files - dmemout.txt 
+//      regout.txt cycles.txt leds.txt display7seg.txt diskout.txt monitor.txtmonitor.yuv {$Ben}
+
+// test: write a function for each opcode - Aviad
+// test: traceFile and hwRegTraceFile - Ben
 
 
-// TODO: write a function for each opcode - Aviad
-// TODO: LED, Timer, Monitor - nagia ahar kach
-// TODO: traceFile and hwRegTraceFile - Ben
 
-
-
-//ATTENTION: i do not know if the PC should be incremented in simCycle after a PC related Cmd
-//ATTENTION: i did not create a halCmd() functon because i think this should just return the simCycle() function.
+//ATTENTION: i did not create a haltCmd() functon because i think this should just return the simCycle() function.
 
 
 int init()
 {
+    //TODO: put every variable to zero, call functions to read from input files,
+    // open trace files - trace.txt hwregtrace.txt leds.txt display7seg.tx 
     return 0;
 }
 
 int simClockCycle()
 {
     //TODO: decide in which order we need to call the functions
+    //TODO: interrupts,handle trace files - update_tracefile() , call parse instruction function , call opcode(if not jump),
+    //  check and handle monitor/disk ,
+    // handle trace files - hwtracefile() , 
+    //increment PC(when not jumping)/timer(if enabled)
     return 0;
 }
 
-int exit()
+int byebye()
 {
+    //TODO: call the output file functions, close all files
     // handle file updates
     return 0;
 }
