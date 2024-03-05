@@ -118,7 +118,7 @@ int incrementTimer(void){
         deviceRegisters[12] =0;
         deviceRegisters[3]=1;
     }
-    return 1;
+    return 0;
 }
 
 int readimemin(char *imeminFileName){
