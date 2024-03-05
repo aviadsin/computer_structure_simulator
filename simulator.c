@@ -60,6 +60,7 @@ const char* hwRegistersNames[] = {
 //             i chose to read all of the memory at once
 //ATTENTION3: i did not deal with diskin.txt 
 //            becuase we did not design a memory structure for it
+//ATTENTION4: all register need to be initialized to 0
 
 
 
@@ -95,6 +96,29 @@ int main(int argc, char const *argv[])
     simClockCycle();
     exit();
     return 0;
+}
+
+int writeToMonitor(void){
+    int line = deviceRegisters[20]/256;
+    int index = deviceRegisters[20]%256;
+    monitor[line][index] = deviceRegisters[21];
+    deviceRegisters[22]=0;
+    return 0;
+}
+
+int writeToLeds(FILE *ledsFileName){
+    LEDS = deviceRegisters[9];
+    fprintf(ledsFileName, "%d %u\n", cycle,LEDS);
+    return 0;
+}
+
+int incrementTimer(void){
+    deviceRegisters[12]+=1;
+    if(deviceRegisters[12]==deviceRegisters[13]){
+        deviceRegisters[12] =0;
+        deviceRegisters[3]=1;
+    }
+    return 1;
 }
 
 int readimemin(char *imeminFileName){
