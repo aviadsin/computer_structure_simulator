@@ -20,6 +20,7 @@ uint64_t instructions[4096];
 uint32_t memory[4096];
 uint32_t LEDS;
 uint8_t monitor[256][256];
+uint32_t disk[16384];
 FILE* traceFile;
 FILE* hwRegTraceFile;
 FILE* ledFile;
@@ -153,6 +154,36 @@ int readdmemin(char *dmeminFileName){
         cnt++;
     }
     fclose(dmemin);
+    return 0;
+}
+
+int readdiskin(char *diskinFileName){
+    FILE *diskin;
+    char line[9];
+    int cnt = 0;
+    uint32_t current_disk_line;
+    uint32_t letter;
+    int i;
+
+    diskin = fopen(diskinFileName, "r");
+     if (diskin == NULL) {
+        return 1;
+    }
+
+    while (fgets(line, 8, diskin) != NULL) {
+        current_disk_line = 0;
+        for(i=0;i<8;i++){
+            letter = hex_to_bin32(line[i]);
+            if(letter==UINT32_MAX){
+                return 1;
+            }
+            current_disk_line+=letter;
+            current_disk_line<<4;
+        }
+        disk[cnt] = current_disk_line;
+        cnt++;
+    }
+    fclose(diskin);
     return 0;
 }
 
