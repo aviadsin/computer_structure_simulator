@@ -25,6 +25,8 @@ FILE* traceFile;
 FILE* hwRegTraceFile;
 FILE* ledFile;
 FILE* display7segFile;
+int dskCycle;
+int dskCmd;
 const char* hwRegistersNames[] = {
     // Usage:
     // hwRegisterNames[register number] -> "regname"
@@ -83,18 +85,20 @@ int simClockCycle()
 {
     //TODO: decide in which order we need to call the functions
     /*
+    do disk shit - r/w sector (from dskCmd),reset busy diskcmd(registor) , activate irqstatus1 
     update_tracefile()
     timer
     interrupts
     call parse instruction function !!! - {$$ben}
     call opcode(if not jump)
-    check and handle monitor/disk/LEDS/7seg - write7Seg
+    check and handle monitor/disk - busy and dskCmd u saves clockcycle+1024/LEDS/7seg - write7Seg
     hwtracefile() ,
     increment PC(when not jumping)
     halt - return -1 else 0 error 1
     */
     update_traceFile();
-    
+    incrementTimer();
+
     //TODO: interrupts,handle trace files - update_tracefile() , call parse instruction function , call opcode(if not jump),
     //  check and handle monitor/disk ,
     // handle trace files - hwtracefile() , 
