@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct LinkedList_int{
     struct LinkedList *next;
@@ -27,6 +28,8 @@ FILE* ledFile;
 FILE* display7segFile;
 int dskCycle;
 int dskCmd;
+int inIrq;
+int changedPC;
 const char* hwRegistersNames[] = {
     // Usage:
     // hwRegisterNames[register number] -> "regname"
@@ -96,8 +99,124 @@ int simClockCycle()
     increment PC(when not jumping)
     halt - return -1 else 0 error 1
     */
+    bool irq = (deviceRegisters[3]==1 && deviceRegisters[0]==1)||(deviceRegisters[4]==1 && deviceRegisters[1]==1)||(deviceRegisters[5]==1 && deviceRegisters[2]==1);
+    uint32_t inst[7];
+    changedPC = 0;
     update_traceFile();
+    if(cycle==dskCycle && deviceRegisters[17]==1){
+        //do disk shit
+    }
     incrementTimer();
+    if(inIrq == 0 && irq){
+        if(deviceRegisters[3]==1 && deviceRegisters[0]==1){
+            deviceRegisters[3] = 0;
+        }
+        else{
+            if(deviceRegisters[4]==1 && deviceRegisters[1]==1){
+                deviceRegisters[4] = 0;
+            }
+            else{
+                if(deviceRegisters[5]==1 && deviceRegisters[2]==1){
+                    deviceRegisters[5] = 0;
+                }
+            }
+        }
+        deviceRegisters[7] = PC;
+        PC = deviceRegisters[6];
+        changedPC = 1;
+        inIrq = 1;
+
+    }else{
+        //inst = parse instruction function
+        if(inst[0] == 0){
+            addCmd(inst[1],inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 1){
+            subCmd(inst[1],inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 2){
+            macCmd(inst[1],inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 3){
+            andCmd(inst[1],inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 4){
+            orCmd(inst[1],inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 5){
+            xorCmd(inst[1],inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 6){
+            sllCmd(inst[1],inst[2],inst[3]);
+        }
+        if(inst[0] == 7){
+            sraCmd(inst[1],inst[2],inst[3]);
+        }
+        if(inst[0] == 8){
+            srlCmd(inst[1],inst[2],inst[3]);
+        }
+        if(inst[0] == 9){
+            beqCmd(inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 10){
+            bneCmd(inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 11){
+            bltCmd(inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 12){
+            bgtCmd(inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 13){
+            bleCmd(inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 14){
+            bgeCmd(inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 15){
+            jalCmd(inst[1],inst[4]);
+        }
+        if(inst[0] == 16){
+            lwCmd(inst[1],inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 17){
+            swCmd(inst[1],inst[2],inst[3],inst[4]);
+        }
+        if(inst[0] == 18){
+            retiCmd();
+        }
+        if(inst[0] == 19){
+            inCmd(inst[1],inst[2],inst[3]);
+            update_hwRegTraceFile("READ", (int)(inst[2]+inst[3]) , inst[1]);
+        }
+        if(inst[0] == 20){
+            outCmd(inst[2],inst[3],inst[4]);
+            update_hwRegTraceFile("WRITE",(int)(inst[2]+inst[3]),inst[4]);
+            if(inst[2]+inst[3] == 22 && inst[4] !=0){
+                writeToMonitor();
+            }
+            if(inst[2]+inst[3] == 14 && inst[4] !=0){
+                dskCycle = cycle+1024;
+                dskCmd = inst[4];
+                deviceRegisters[17]=1;
+            }
+            if(inst[2]+inst[3] == 9){
+                writeLeds(ledFile);
+            }
+            if(inst[2]+inst[3] == 9){
+                write7Seg(display7segFile);
+            }
+
+        }
+        if(changedPC==0){
+            PC+=1;
+        }
+        if(inst[0]==21){
+            return -1;
+        }
+        return 0;
+
+    }
 
     //TODO: interrupts,handle trace files - update_tracefile() , call parse instruction function , call opcode(if not jump),
     //  check and handle monitor/disk ,
@@ -338,6 +457,17 @@ int andCmd(int rd, int rs,int rt, int rm){
     return 1;
 }
 
+int orCmd(int rd, int rs,int rt, int rm){
+    if(rd<0||rd>=16){
+        return 0;
+    }
+    if(rd<=2){
+        return 1;
+    }
+    registers[rd] = registers[rs] | registers[rt] | registers[rm];
+    return 1;
+}
+
 int xorCmd(int rd, int rs,int rt, int rm){
     if(rd<0||rd>=16){
         return 0;
@@ -393,6 +523,7 @@ int srlCmd(int rd, int rs,int rt){
 int beqCmd(int rs, int rt,int rm){ //////// i don't know if we should c=increment the value of PC by 1 in simCycle() after this function is called
     if(registers[rs]==registers[rt]){
         PC = (registers[rm]<<21)>>21;
+        changedPC = 1;
     }
     return 1;
 }
@@ -400,6 +531,7 @@ int beqCmd(int rs, int rt,int rm){ //////// i don't know if we should c=incremen
 int bneCmd(int rs, int rt,int rm){ //////// i don't know if we should c=increment the value of PC by 1 in simCycle() after this function is called
     if(registers[rs]!=registers[rt]){
         PC = (registers[rm]<<21)>>21;
+        changedPC = 1;
     }
     return 1;
 }
@@ -407,6 +539,7 @@ int bneCmd(int rs, int rt,int rm){ //////// i don't know if we should c=incremen
 int bltCmd(int rs, int rt,int rm){ //////// i don't know if we should c=increment the value of PC by 1 in simCycle() after this function is called
     if(registers[rs]<registers[rt]){
         PC = (registers[rm]<<21)>>21;
+        changedPC = 1;
     }
     return 1;
 }
@@ -414,6 +547,7 @@ int bltCmd(int rs, int rt,int rm){ //////// i don't know if we should c=incremen
 int bgtCmd(int rs, int rt,int rm){ //////// i don't know if we should c=increment the value of PC by 1 in simCycle() after this function is called
     if(registers[rs]>registers[rt]){
         PC = (registers[rm]<<21)>>21;
+        changedPC = 1;
     }
     return 1;
 }
@@ -421,6 +555,7 @@ int bgtCmd(int rs, int rt,int rm){ //////// i don't know if we should c=incremen
 int bleCmd(int rs, int rt,int rm){ //////// i don't know if we should c=increment the value of PC by 1 in simCycle() after this function is called
     if(registers[rs]<=registers[rt]){
         PC = (registers[rm]<<21)>>21;
+        changedPC = 1;
     }
     return 1;
 }
@@ -428,6 +563,7 @@ int bleCmd(int rs, int rt,int rm){ //////// i don't know if we should c=incremen
 int bgeCmd(int rs, int rt,int rm){ //////// i don't know if we should c=increment the value of PC by 1 in simCycle() after this function is called
     if(registers[rs]<=registers[rt]){
         PC = (registers[rm]<<21)>>21;
+        changedPC = 1;
     }
     return 1;
 }
@@ -441,6 +577,7 @@ int jalCmd(int rd,int rm){ //////// i don't know if we should c=increment the va
     }
     registers[rd] = (uint32_t)(PC+1);
     PC = (registers[rm]<<21)>>21;
+    changedPC = 1;
     return 1;
 }
 
@@ -466,8 +603,10 @@ int swCmd(int rd, int rs,int rt, int rm){
     return 1;
 }
 
-int retiCmd(){ //////// i don't know if we should c=increment the value of PC by 1 in simCycle() after this function is called
+int retiCmd(void){ //////// i don't know if we should c=increment the value of PC by 1 in simCycle() after this function is called
     PC = deviceRegisters[7];
+    changedPC = 1;
+    inIrq = 0;
     return 1;
 }
 
@@ -483,7 +622,9 @@ int inCmd(int rd, int rs,int rt) {
 }
 
 int outCmd(int rs,int rt, int rm){ 
-    deviceRegisters[registers[rs]+registers[rt]] = registers[rm];
+    if(registers[rs]+registers[rt]!=17){
+        deviceRegisters[registers[rs]+registers[rt]] = registers[rm];
+    }
     return 1;
 }
 
