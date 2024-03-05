@@ -24,6 +24,7 @@ uint32_t disk[16384];
 FILE* traceFile;
 FILE* hwRegTraceFile;
 FILE* ledFile;
+FILE* display7segFile;
 const char* hwRegistersNames[] = {
     // Usage:
     // hwRegisterNames[register number] -> "regname"
@@ -69,16 +70,35 @@ int init()
 {
     //TODO: put every variable to zero, call functions to read from input files,
     // open trace files - trace.txt hwregtrace.txt leds.txt display7seg.tx 
+    /*
+    put every variable to zero
+    call functions to read from input files - readimemin more reads and shit
+    open trace files - global shit
+    
+    */
     return 0;
 }
 
 int simClockCycle()
 {
     //TODO: decide in which order we need to call the functions
+    /*
+    update_tracefile()
+    timer
+    interrupts
+    call parse instruction function !!! - {$$ben}
+    call opcode(if not jump)
+    check and handle monitor/disk/LEDS/7seg - write7Seg
+    hwtracefile() ,
+    increment PC(when not jumping)
+    halt - return -1 else 0 error 1
+    */
+    update_traceFile();
+    
     //TODO: interrupts,handle trace files - update_tracefile() , call parse instruction function , call opcode(if not jump),
     //  check and handle monitor/disk ,
     // handle trace files - hwtracefile() , 
-    //increment PC(when not jumping)/timer(if enabled)
+    //increment PC(when not jumping)
     return 0;
 }
 
@@ -93,8 +113,9 @@ int byebye()
 int main(int argc, char const *argv[])
 {
     init();
-    simClockCycle();
-    exit();
+    while(simClockCycle()==0){
+    }
+    byebye();
     return 0;
 }
 
