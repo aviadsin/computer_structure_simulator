@@ -504,5 +504,144 @@ int update_hwRegTraceFile(const char* action, int regNum, uint32_t data){
 
     return 0;
 
+}
 
+
+int writeDmemout(FILE* dmemoutFile)
+{
+    // Assuming dmemoutFile is open and valid
+        for (size_t i = 0; i < sizeof(memory)/sizeof(memory[0]); i++) {
+        fprintf(dmemoutFile, "%08X\n", memory[i]);
+    }
+    fprintf(dmemoutFile, "\n"); 
+
+    return 0;
+}
+
+int writeRegout(FILE* regoutFile)
+{
+    if(regoutFile==NULL)
+    {
+        printf("regout.txt not opened properly.\n");
+        return 1;
+    }
+    int i=3;
+    for(;i<16;i++)
+    {
+        fprintf(regoutFile, "08X\n", registers[i]);
+    }
+    
+    fprintf(regoutFile, "\n"); 
+    return 0;
+}
+
+int writeCycles(FILE* cyclesFile)
+{
+    if(cyclesFile == NULL)
+    {
+        printf("cycles.txt not opened properly.\n");
+        return 1;
+    }
+    fprintf(cyclesFile, "%u", cycle);
+    return 0;
+}
+
+int writeLeds(FILE* ledFile)
+{
+    // call this function when a led changes
+    if(ledFile == NULL)
+    {
+        printf("leds.txt not opened properly.\n");
+        return 1;
+    }
+
+    fprintf(ledFile, "%u %08X\n", cycle, LEDS);
+    return 0;
+
+}
+
+int write7Seg(FILE* sevenSegmentFile)
+{
+    if (sevenSegmentFile == NULL)
+    {
+        printf("display7seg.txt not opened properly.\n");
+        return 1;
+    }
+
+    fprintf(sevenSegmentFile, "%u %08X\n", cycle, deviceRegisters[10]);
+    return 0;
+}
+
+int writeDiskOut(FILE* diskoutFile)
+{
+    // Assuming we're writing one 32 bit word (8 hex digits) in each line, and between sectors (128 words)
+    // there's an extra "\n"
+    if(diskoutFile == NULL)
+    {
+        printf("diskout.txt not opened properly.\n");
+        return 1;
+    }
+
+    int sector = 0;
+    int i=0;
+    for(;sector<128;sector++)
+    {
+        for(;i<128;i++)
+        {
+            fprintf(diskoutFile, "%08X\n", disk[128*sector + i]); // max{128*sector+i} = 128*127+127 = 16383 as required :)
+        }
+        fprintf(diskoutFile, "\n"); /////// MAKE SURE THIS IS THE REQUIRED FORMAT BEFORE SUBMISSION
+        i=0;
+    }
+    return 0;
+}
+
+int writeMonitorTxt(FILE* monitorFile)
+{
+    if(monitorFile == NULL)
+    {
+        printf("monitor.txt not opened properly.\n");
+        return 1;
+    }
+
+    int row = 0, col=0;
+    for(; row<128; row++)
+    {
+        for(;col<128;col++)
+        {
+            fprintf(monitorFile, "%02X\n", monitor[row][col]); /////// MAKE SURE THIS IS TOP TO BOTTOM AND THEN LEFT TO RIGHT
+        }
+
+        col = 0;
+    }
+
+    return 0;
+}
+
+uint8_t hexStringToByte(const char* hexString) {
+    // Helper function
+
+    int hi = hexCharToValue(hexString[0]);
+    int lo = hexCharToValue(hexString[1]);
+    
+    if (hi == -1 || lo == -1) {
+        fprintf(stderr, "Invalid hexadecimal digit encountered.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    return (uint8_t)((hi << 4) | lo);
+}
+
+int writeMonitorFiles(FILE* txtMonitorFile, FILE* binMonitorFile)
+{
+
+    writeMonitorTxt(txtMonitorFile); // write monitor contents to the .txt file
+    fseek(txtMonitorFile, 0, SEEK_SET); // move the .txt file pointer to point at the beginning of the file.
+    char hexString[3]; // To store two hexadecimal digits and a null terminator (contents of each line)
+    while (fscanf(txtMonitorFile, "%2s", hexString) == 1) {
+        uint8_t byte = hexStringToByte(hexString); // ignore the null terminator and convert each line to 2 hex digits (a.k.a 2*4 bits = 8 bits)
+        fwrite(&byte, sizeof(byte), 1, binMonitorFile); 
+    }
+
+    return 0;
 }
