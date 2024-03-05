@@ -6,8 +6,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
+typedef struct LinkedList_int{
+    struct LinkedList *next;
+    int cycleVal;
+}LinkedList_int;
 
-
+struct LinkedList_int *irq2List;
 int cycle;
 int PC; //program counter
 uint32_t registers[16];
@@ -48,7 +52,15 @@ const char* hwRegistersNames[] = {
 
 
 
-//ATTENTION: i did not create a haltCmd() functon because i think this should just return the simCycle() function.
+//ATTENTION1: i did not create a haltCmd() functon because i think this should just return the simCycle() function.
+//ATTENTION2: i do not know if ther is a maximal clock cycle for irq2in.txt 
+//           | i also do not know if to read the hold file at once in the beginning
+//             or read it line by line as the program runs
+//             i chose to read all of the memory at once
+//ATTENTION3: i did not deal with diskin.txt 
+//            becuase we did not design a memory structure for it
+
+
 
 
 int init()
@@ -82,6 +94,123 @@ int main(int argc, char const *argv[])
     simClockCycle();
     exit();
     return 0;
+}
+
+int readimemin(char *imeminFileName){
+    FILE *imemin;
+    char line[13];
+    int cnt = 0;
+    uint64_t current_instruction;
+    uint64_t letter;
+    int i;
+
+    imemin = fopen(imeminFileName, "r");
+     if (imemin == NULL) {
+        return 1;
+    }
+
+    while (fgets(line, 12, imemin) != NULL) {
+        current_instruction = 0;
+        for(i=0;i<12;i++){
+            letter = hex_to_bin64(line[i]);
+            if(letter==UINT64_MAX){
+                return 1;
+            }
+            current_instruction+=letter;
+            current_instruction<<4;
+        }
+        instructions[cnt] = current_instruction;
+        cnt++;
+    }
+    fclose(imemin);
+    return 0;
+}
+
+int readdmemin(char *dmeminFileName){
+    FILE *dmemin;
+    char line[9];
+    int cnt = 0;
+    uint32_t current_memory_line;
+    uint32_t letter;
+    int i;
+
+    dmemin = fopen(dmeminFileName, "r");
+     if (dmemin == NULL) {
+        return 1;
+    }
+
+    while (fgets(line, 8, dmemin) != NULL) {
+        current_memory_line = 0;
+        for(i=0;i<8;i++){
+            letter = hex_to_bin32(line[i]);
+            if(letter==UINT32_MAX){
+                return 1;
+            }
+            current_memory_line+=letter;
+            current_memory_line<<4;
+        }
+        memory[cnt] = current_memory_line;
+        cnt++;
+    }
+    fclose(dmemin);
+    return 0;
+}
+
+int readirq2in(char irq2inFileName){
+    FILE *irq2in;
+    char *line[20];
+    int cycle;
+    int i;
+    LinkedList_int *lastNode;
+    LinkedList_int *curNode;
+
+    irq2List = NULL;
+    irq2in = fopen(irq2inFileName, "r");
+     if (irq2in == NULL) {
+        return 1;
+    }
+
+    while (fgets(line, 20, irq2in) != NULL) {
+        cycle = atoi(line);
+        curNode = (LinkedList_int*)malloc(sizeof(LinkedList_int));
+        if(curNode == NULL){
+            return 1;
+        }
+        curNode->next = NULL;
+        curNode->cycleVal = cycle;
+        if(irq2List == NULL){
+            irq2List = curNode;
+            lastNode = curNode;
+        }
+        else{
+            lastNode->next = curNode;
+            lastNode = curNode;
+        }
+    }
+    fclose(irq2in);
+    return 0;
+}
+
+uint64_t hex_to_bin64(char hex_char) {
+    if (hex_char >= '0' && hex_char <= '9')
+        return hex_char - '0';
+    else if (hex_char >= 'a' && hex_char <= 'f')
+        return hex_char - 'a' + 10;
+    else if (hex_char >= 'A' && hex_char <= 'F')
+        return hex_char - 'A' + 10;
+    else
+        return UINT64_MAX;
+}
+
+uint32_t hex_to_bin32(char hex_char) {
+    if (hex_char >= '0' && hex_char <= '9')
+        return hex_char - '0';
+    else if (hex_char >= 'a' && hex_char <= 'f')
+        return hex_char - 'a' + 10;
+    else if (hex_char >= 'A' && hex_char <= 'F')
+        return hex_char - 'A' + 10;
+    else
+        return UINT32_MAX;
 }
 
 int addCmd(int rd, int rs,int rt, int rm){
