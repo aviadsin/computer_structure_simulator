@@ -27,7 +27,9 @@ FILE* hwRegTraceFile;
 FILE* ledFile;
 FILE* display7segFile;
 int dskCycle;
+int dskBuffer;
 int dskCmd;
+int dskSector;
 int inIrq;
 int changedPC;
 const char* hwRegistersNames[] = {
@@ -238,6 +240,8 @@ int simClockCycle()
             if(inst[2]+inst[3] == 14 && inst[4] !=0){
                 dskCycle = cycle+1024;
                 dskCmd = inst[4];
+                dskBuffer= deviceRegisters[16];
+                dskSector = deviceRegisters[15];
                 deviceRegisters[17]=1;
             }
             if(inst[2]+inst[3] == 9){
