@@ -70,7 +70,6 @@ const char* hwRegistersNames[] = {
 
 
 
-
 int init()
 {
     //TODO: put every variable to zero, call functions to read from input files,
@@ -100,7 +99,7 @@ int simClockCycle()
     halt - return -1 else 0 error 1
     */
     bool irq = (deviceRegisters[3]==1 && deviceRegisters[0]==1)||(deviceRegisters[4]==1 && deviceRegisters[1]==1)||(deviceRegisters[5]==1 && deviceRegisters[2]==1);
-    uint32_t inst[7];
+    int *inst; 
     changedPC = 0;
     update_traceFile();
     if(cycle==dskCycle && deviceRegisters[17]==1){
@@ -128,6 +127,7 @@ int simClockCycle()
 
     }else{
         //inst = parse instruction function
+        inst = parseInstruction(instructions[PC]);
         if(inst[0] == 0){
             addCmd(inst[1],inst[2],inst[3],inst[4]);
         }
@@ -810,4 +810,29 @@ int writeMonitorFiles(FILE* txtMonitorFile, FILE* binMonitorFile)
     }
 
     return 0;
+}
+
+
+int* parseInstruction(uint64_t inst)
+{
+    /*
+    ret[0] = opcode
+    ret[1] = rd
+    ret[2] = rs
+    ret[3] = rt
+    ret[4] = rm
+    */
+
+    int ret[5];
+    ret[0] = inst>>40;
+    ret[1] = (inst >>36) & 0xf;
+    ret[2] = (inst>>32) & 0xf;
+    ret[3] = (inst>>28) & 0xf;
+    ret[4] = (inst>>24) & 0xf;
+
+    // update $imm1, $imm2 values
+    registers[1] = (inst>>12) & 0xfff; // $imm1
+    registers[2] = inst & 0xfff; // $imm2
+
+    return ret;
 }
