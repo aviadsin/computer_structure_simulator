@@ -12,6 +12,54 @@ typedef struct LinkedList_int{
     int cycleVal;
 }LinkedList_int;
 
+int init(int argc, char const *argv[]);
+int simClockCycle(void);
+int byebye(int argc, char const *argv[]);
+int writeToMonitor(void);
+int writeToLeds(FILE *ledsFileName);
+int incrementTimer(void);
+int readimemin(char *meminFileName);
+int readdmemin(char *dmeminFileName);
+int readdiskin(char *diskinFileName);
+int readirq2in(char *irq2inFileName);
+uint64_t hex_to_bin64(char hex_char);
+uint32_t hex_to_bin32(char hex_char);
+int addCmd(int rd, int rs, int rt, int rm);
+int subCmd(int rd, int rs, int rt, int rm);
+int macCmd(int rd, int rs, int rt, int rm);
+int andCmd(int rd, int rs, int rt, int rm);
+int orCmd(int rd, int rs, int rt, int rm);
+int xorCmd(int rd, int rs, int rt, int rm);
+int sllCmd(int rd, int rs, int rt);
+int sraCmd(int rd, int rs, int rt);
+int srlCmd(int rd, int rs, int rt);
+int beqCmd(int rs, int rt, int rm);
+int bneCmd(int rs, int rt, int rm);
+int bltCmd(int rs, int rt, int rm);
+int bgtCmd(int rs, int rt, int rm);
+int bleCmd(int rs, int rt, int rm);
+int bgeCmd(int rs, int rt, int rm);
+int jalCmd(int rd, int rm);
+int lwCmd(int rd, int rs, int rt, int rm);
+int swCmd(int rd, int rs, int rt, int rm);
+int retiCmd(void);
+int inCmd(int rd, int rs, int rt);
+int outCmd(int rs, int rt, int rm);
+int update_traceFile(void);
+int update_hwRegTraceFile(const char* action, int regNum, uint32_t data);
+int writeDmemout(FILE* dmemoutFile);
+int writeRegout(FILE* regoutFile);
+int writeCycles(FILE* cyclesFile);
+int writeLeds(FILE* ledFile);
+int write7Seg(FILE* sevenSegmentFile);
+int writeDiskOut(FILE* diskoutFile);
+int writeMonitorTxt(FILE* monitorFile);
+uint8_t hexStringToByte(const char* hexString);
+int writeMonitorFiles(FILE* txtMonitorFile, FILE* binMonitorFile);
+int* parseInstruction(uint64_t inst);
+int handleDisk(void);
+
+
 struct LinkedList_int *irq2List;
 int cycle;
 int PC; //program counter
@@ -249,7 +297,7 @@ int simClockCycle()
             if(inst[2]+inst[3] == 22 && inst[4] !=0){
                 writeToMonitor();
             }
-            if(inst[2]+inst[3] == 14 && inst[4] !=0){
+            if(inst[2]+inst[3] == 14 && inst[4] !=0 && deviceRegisters[17]!=1){
                 dskCycle = cycle+1024;
                 dskCmd = inst[4];
                 dskBuffer= deviceRegisters[16];
@@ -468,7 +516,7 @@ int readdiskin(char *diskinFileName){
     return 0;
 }
 
-int readirq2in(char irq2inFileName){
+int readirq2in(char *irq2inFileName){
     FILE *irq2in;
     char *line[20];
     int cycle;
