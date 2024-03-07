@@ -110,9 +110,21 @@ int init(int argc, char const *argv[])
     readdiskin(argv[3]);
     readirq2in(argv[4]);
     traceFile = fopen(argv[7], "r+");
+    if(traceFile==NULL){
+        return 1;
+    }
     hwRegTraceFile = fopen(argv[8], "r+");
+    if(hwRegTraceFile==NULL){
+        return 1;
+    }
     ledFile = fopen(argv[10], "r+");
+    if(ledFile==NULL){
+        return 1;
+    }
     display7segFile = fopen(argv[11], "r+");
+    if(display7segFile==NULL){
+        return 1;
+    }
     LEDS=0;
     irq2List = NULL;
     cycle =0;
@@ -271,10 +283,65 @@ int simClockCycle()
     return 0;
 }
 
-int byebye()
+int byebye(int argc, char const *argv[])
 {
     //TODO: call the output file functions, close all files
     // handle file updates
+    FILE *dmeout;
+    FILE *Regout;
+    FILE *Cyclesout;
+    FILE *DiskOut;
+    FILE *MonitorOutTxt;
+    FILE *MonitorOutYuv;
+
+    dmeout = fopen(argv[5], "r+");
+    if(dmeout==NULL){
+        return 1;
+    }
+    writeDmemout(dmeout);
+    fclose(dmeout);
+
+    Regout = fopen(argv[6], "r+");
+    if(Regout==NULL){
+        return 1;
+    }
+    writeRegout(Regout);
+    fclose(Regout);
+
+    Cyclesout = fopen(argv[9], "r+");
+    if(Cyclesout==NULL){
+        return 1;
+    }
+    writeCycles(Cyclesout);
+    fclose(Cyclesout);
+
+    DiskOut = fopen(argv[12], "r+");
+    if(DiskOut==NULL){
+        return 1;
+    }
+    writeDiskOut(DiskOut);
+    fclose(DiskOut);
+
+    MonitorOutTxt = fopen(argv[13], "r+");
+    if(MonitorOutTxt==NULL){
+        return 1;
+    }
+    MonitorOutYuv = fopen(argv[14], "wb");
+    if(MonitorOutYuv==NULL){
+        return 1;
+    }
+    writeMonitorFiles(MonitorOutTxt,MonitorOutYuv);
+    fclose(MonitorOutTxt);
+    fclose(MonitorOutYuv);
+
+    fclose(traceFile);
+    fclose(hwRegTraceFile);
+    fclose(ledFile);
+    fclose(display7segFile);
+
+
+
+
     return 0;
 }
 
@@ -284,7 +351,7 @@ int main(int argc, char const *argv[])
     init(argc,argv);
     while(simClockCycle()==0){
     }
-    byebye();
+    byebye(argc,argv);
     return 0;
 }
 
