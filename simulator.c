@@ -70,7 +70,8 @@ const char* hwRegistersNames[] = {
 
 
 
-int init()
+
+int init(int argc, char const *argv[])
 {
     //TODO: put every variable to zero, call functions to read from input files,
     // open trace files - trace.txt hwregtrace.txt leds.txt display7seg.tx 
@@ -80,6 +81,45 @@ int init()
     open trace files - global shit
     
     */
+    int i,j;
+    
+    for(i=0;i<16;i++){
+        registers[i]=0;
+    }
+    for(i=0;i<23;i++){
+        deviceRegisters[i]=0;
+    }
+    for(i=0;i<4096;i++){
+        instructions[i]=0;
+    }
+    for(i=0;i<4096;i++){
+        memory[i]=0;
+    }
+    for(i=0;i<4096;i++){
+        for(j=0;j<256;j++){
+            monitor[i][j]=0;
+        }
+    }
+    for(i=0;i<16384;i++){
+        disk[i]=0;
+    }
+    readimemin(argv[1]);
+    readdmemin(argv[2]);
+    readdiskin(argv[3]);
+    readirq2in(argv[4]);
+    traceFile = fopen(argv[7], "r+");
+    hwRegTraceFile = fopen(argv[8], "r+");
+    ledFile = fopen(argv[10], "r+");
+    display7segFile = fopen(argv[11], "r+");
+    LEDS=0;
+    irq2List = NULL;
+    cycle =0;
+    PC=0;
+    dskCycle=0;
+    dskCmd=0;
+    inIrq=0;
+    changedPC=0;
+
     return 0;
 }
 
@@ -214,6 +254,8 @@ int simClockCycle()
         if(inst[0]==21){
             return -1;
         }
+        cycle++;
+        deviceRegisters[8] = (deviceRegisters[8]+1)%0xffffffff;
         return 0;
 
     }
@@ -235,7 +277,7 @@ int byebye()
 
 int main(int argc, char const *argv[])
 {
-    init();
+    init(argc,argv);
     while(simClockCycle()==0){
     }
     byebye();
